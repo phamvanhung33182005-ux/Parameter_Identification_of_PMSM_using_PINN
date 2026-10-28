@@ -1,8 +1,6 @@
-numpy
-pandas
-matplotlib
-scipy
-scikit-learn
-torch
-pyyaml
-jupyter
+numpy>=1.24
+pandas>=2.0
+scipy>=1.10
+matplotlib>=3.7
+pyyaml>=6.0
+torch>=2.0

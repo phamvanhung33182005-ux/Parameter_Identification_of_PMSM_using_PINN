@@ -1,0 +1,64 @@
+# Tệp cấu hình trung tâm của dự án nhận dạng tham số PMSM bằng PINN
+project:  # Nhóm thông tin chung của dự án
+  name: Parameter_Identification_of_PMSM_using_PINN  # Tên dự án
+  seed: 42  # Hạt giống ngẫu nhiên để tái lập kết quả
+paths:  # Nhóm đường dẫn trên Google Drive
+  drive_root: /content/drive/MyDrive/Parameter_Identification_of_PMSM_using_PINN  # Thư mục gốc trên Drive
+  raw: dataset/raw  # Dữ liệu thô
+  processed: dataset/processed  # Dữ liệu đã xử lý
+  models: models  # Trọng số mô hình đã huấn luyện
+  results: results  # Biểu đồ, nhật ký, kết quả
+  backups: backups  # Bản sao lưu dự phòng
+motor:  # Thông số động cơ và giới hạn vận hành
+  pole_pairs: 9  # Số cặp cực p
+  phi_m: 0.23890939  # Từ thông nam châm Φm (Wb), hằng số theo PRD
+  rs_20c: 0.03383  # Điện trở pha stator tại 20 °C (Ω)
+  ld_unsat: 0.001467  # Điện cảm trục d chưa bão hòa (H)
+  lq_unsat: 0.001466  # Điện cảm trục q chưa bão hòa (H)
+  i_rated_peak: 65.28  # Dòng đỉnh pha định mức In,pk (A)
+  u_dc: 300.0  # Điện áp một chiều của bộ biến tần (V)
+  n_max: 1100.0  # Tốc độ tối đa (vòng/phút)
+  n_rated: 749.45  # Tốc độ định mức (vòng/phút)
+data:  # Cấu hình bộ dữ liệu
+  raw_files: [Data1.csv, Data2.csv, Data3.csv, Data4.csv, Data5.csv]  # Danh sách tệp thô
+  columns: [Time, Isc_m, Isb_m, Isa_m, Id, Iq, Idr, Iqr, ud, Tem, nm, uq, T_Load, Ld, Lq, nm_ref, Rs]  # Tên cột
+  split:  # Chia tập theo tệp để tránh rò rỉ thông tin
+    train: [Data1.csv, Data2.csv, Data3.csv]  # [TBD] Tập huấn luyện
+    val: [Data4.csv]  # [TBD] Tập kiểm định
+    test: [Data5.csv]  # [TBD] Tập kiểm thử
+  stride: 1  # [TBD] Bước lấy mẫu con
+  sg_window: 21  # [TBD] Độ rộng cửa sổ Savitzky-Golay (số mẫu, lẻ)
+  sg_polyorder: 3  # [TBD] Bậc đa thức Savitzky-Golay
+  rs_step_threshold: 0.005  # Ngưỡng tương đối phát hiện bước nhảy Rs
+  t_settle: 0.05  # [TBD] Thời gian xác lập sau bước nhảy Rs (s)
+  sat_ratio: 0.95  # [TBD] Tỷ số L/L chưa bão hòa dưới ngưỡng này là bão hòa
+  bound_margin: 0.2  # Biên mở rộng khoảng giá trị đầu ra
+model:  # Cấu hình mô hình
+  hidden_sizes: [32, 32]  # [TBD] Số nơ-ron mỗi lớp ẩn
+  activation: tanh  # Hàm kích hoạt lớp ẩn
+  input_names: [ud, uq, Id, Iq, nm]  # Vector đầu vào
+  output_names: [Rs, Ld, Lq]  # Vector đầu ra
+train:  # Cấu hình huấn luyện
+  batch_size: 1024  # [TBD] Kích thước lô
+  epochs: 300  # [TBD] Số kỷ nguyên tối đa
+  lr: 0.001  # [TBD] Tốc độ học ban đầu
+  weight_decay: 0.0001  # Hệ số suy giảm trọng số
+  patience: 30  # Số kỷ nguyên chờ trước khi dừng sớm
+  grad_clip: 1.0  # Ngưỡng cắt gradient
+loss:  # Cấu hình hàm mất mát
+  lambda_data: 1.0  # Trọng số thành phần dữ liệu
+  lambda_phys: 1.0  # [TBD] Trọng số thành phần vật lý
+  warmup_epochs: 50  # [TBD] Số kỷ nguyên tăng dần trọng số vật lý
+evaluation:  # Chỉ tiêu đánh giá theo PRD
+  verdict_stat: max  # [TBD] Thống kê kết luận: max hoặc p95
+  i_range_low: 0.2  # Cận dưới dải dòng điện theo In
+  recon_horizon_s: 0.01  # [TBD] Độ dài đoạn mô phỏng tái tạo dòng điện (s)
+  rmse_limit_pct: 2.0  # Giới hạn RMSE dòng điện (%)
+  tolerances:  # Sai số tương đối tối đa cho phép (%)
+    Rs: {steady: 3.0, transient: 5.0}  # Điện trở stator
+    Ld: {unsat: 5.0, sat: 7.0}  # Điện cảm trục d
+    Lq: {unsat: 5.0, sat: 8.0}  # Điện cảm trục q
+deployment:  # Cấu hình triển khai trên DSP
+  cpu_mhz: 200.0  # [TBD] Tần số xung nhịp DSP (MHz)
+  task_period_us: 1000.0  # [TBD] Chu kỳ tác vụ nhận dạng (µs)
+  budget_ratio: 0.2  # [TBD] Tỷ lệ thời gian thực thi tối đa trên chu kỳ tác vụ
