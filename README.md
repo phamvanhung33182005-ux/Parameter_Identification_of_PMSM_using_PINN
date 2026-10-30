@@ -1,6 +1,6 @@
 # Nhận dạng tham số động cơ PMSM bằng mạng nơ-ron tuân theo quy luật vật lý (PINN)
 
-Đồ án tốt nghiệp cử nhân, ngành Kỹ thuật điều khiển và Tự động hóa, Đại học Bách khoa Hà Nội.
+Đồ án 2, ngành Kỹ thuật điều khiển và Tự động hóa, Đại học Bách khoa Hà Nội.
 
 ## Mục tiêu
 Nhận dạng điện trở stator Rs và các điện cảm Ld, Lq của động cơ PMSM từ ud, uq, id, iq, nm.
