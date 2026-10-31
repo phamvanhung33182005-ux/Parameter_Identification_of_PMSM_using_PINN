@@ -11,7 +11,7 @@ paths:  # Nhóm đường dẫn trên Google Drive
   backups: backups  # Bản sao lưu dự phòng
 motor:  # Thông số động cơ và giới hạn vận hành
   pole_pairs: 9  # Số cặp cực p
-  phi_m: 0.23890939  # Từ thông nam châm Φm (Wb), hằng số theo PRD
+  phi_m: 0.23191792  # Từ thông nam châm Φm (Wb), hằng số theo PRD
   rs_20c: 0.03383  # Điện trở pha stator tại 20 °C (Ω)
   rs_100c: 0.044186  # Điện trở pha stator tại 100 °C (Ω), theo PRD
   temp_k: 241.34  # Hằng số nhiệt độ suy ra từ Rs tại 20 °C và 100 °C; IEC 60034-2-1 dùng 235 [TBD] xác nhận
