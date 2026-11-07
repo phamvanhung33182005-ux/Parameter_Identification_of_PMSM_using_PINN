@@ -50,7 +50,7 @@ train:  # Cấu hình huấn luyện
 loss:  # Cấu hình hàm mất mát
   lambda_data: 1.0  # Trọng số thành phần dữ liệu
   lambda_phys: 1.0  # [TBD] Trọng số thành phần vật lý
-  lambda_rs: 5.0  # [TBD] Trọng số phạt riêng Rs, λ_rs·((Rs_dự_đoán − Rs_nhãn)/Rs_tham_chiếu)²; 0 là tắt
+  lambda_rs: 20.0  # [TBD] Trọng số phạt riêng Rs, λ_rs·((Rs_dự_đoán − Rs_nhãn)/Rs_tham_chiếu)²; 0 là tắt
   warmup_epochs: 50  # [TBD] Số kỷ nguyên tăng dần trọng số vật lý
 evaluation:  # Chỉ tiêu đánh giá theo PRD
   verdict_stat: max  # [TBD] Thống kê kết luận: max hoặc p95
