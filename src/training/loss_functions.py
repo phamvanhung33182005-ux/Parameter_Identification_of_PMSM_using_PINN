@@ -1,4 +1,4 @@
-"""Hàm mất mát: thành phần dữ liệu, thành phần vật lý và tổng hợp có tăng dần trọng số."""  # Mô tả mô-đun
+"""Hàm mất mát: thành phần dữ liệu, thành phần phạt riêng Rs, thành phần vật lý và tổng hợp có tăng dần trọng số."""  # Mô tả mô-đun
 import torch  # Thư viện học sâu
 import torch.nn as nn  # Các lớp mạng nơ-ron
 from src.models.pinn_model import pmsm_voltage_residual  # Hàm sai số vật lý
@@ -17,6 +17,19 @@ class DataLoss(nn.Module):  # Thành phần dữ liệu
         return (((pred - target) / self.ref) ** 2).mean()  # Bình phương, lấy trung bình
 
 
+class RsLoss(nn.Module):  # Thành phần phạt riêng Rs
+    """Bình phương sai số Rs dự đoán so với nhãn, chia cho Rs tham chiếu: ((R̂s - Rs)/Rs_ref)²."""  # Mô tả lớp
+
+    def __init__(self, rs_ref):  # Hàm khởi tạo
+        """Nhận Rs tham chiếu (Ω) để chuẩn hóa sai số."""  # Mô tả hàm
+        super().__init__()  # Gọi lớp cha
+        self.rs_ref = float(rs_ref)  # Lưu Rs tham chiếu
+
+    def forward(self, pred, target):  # Tính mất mát
+        """Trả về trung bình bình phương sai số tương đối của Rs (cột 0)."""  # Mô tả hàm
+        return (((pred[:, 0] - target[:, 0]) / self.rs_ref) ** 2).mean()  # Chỉ lấy Rs, bình phương, lấy trung bình
+
+
 class PhysicsLoss(nn.Module):  # Thành phần vật lý
     """Bình phương trung bình sai số phương trình điện áp, chuẩn hóa theo điện áp cơ sở."""  # Mô tả lớp
 
@@ -32,13 +45,13 @@ class PhysicsLoss(nn.Module):  # Thành phần vật lý
 
 
 class PINNLoss(nn.Module):  # Mất mát tổng hợp
-    """Tổng hợp L = λ_data·L_data + λ_phys(e)·L_phys với λ_phys tăng tuyến tính theo kỷ nguyên."""  # Mô tả lớp
+    """Tổng hợp L = λ_data·L_data + λ_phys(e)·L_phys + λ_rs·L_rs; λ_phys tăng tuyến tính theo kỷ nguyên, λ_rs không đổi."""  # Mô tả lớp
 
-    def __init__(self, ref, phi_m, u_base, lambda_data, lambda_phys, warmup_epochs):  # Hàm khởi tạo
-        """Nhận các trọng số và số kỷ nguyên tăng dần."""  # Mô tả hàm
+    def __init__(self, ref, phi_m, u_base, lambda_data, lambda_phys, warmup_epochs, lambda_rs=0.0):  # Hàm khởi tạo
+        """Nhận các trọng số, số kỷ nguyên tăng dần và trọng số phạt Rs."""  # Mô tả hàm
         super().__init__()  # Gọi lớp cha
-        self.data, self.phys = DataLoss(ref), PhysicsLoss(phi_m, u_base)  # Hai thành phần
-        self.lam_d, self.lam_p, self.warm = lambda_data, lambda_phys, warmup_epochs  # Lưu trọng số
+        self.data, self.phys, self.rs = DataLoss(ref), PhysicsLoss(phi_m, u_base), RsLoss(ref[0])  # Ba thành phần (ref[0] là Rs tham chiếu)
+        self.lam_d, self.lam_p, self.warm, self.lam_r = lambda_data, lambda_phys, warmup_epochs, lambda_rs  # Lưu trọng số
 
     def phys_weight(self, epoch):  # Trọng số vật lý theo kỷ nguyên
         """Trả về λ_phys tại kỷ nguyên epoch (bắt đầu từ 0)."""  # Mô tả hàm
@@ -50,13 +63,15 @@ class PINNLoss(nn.Module):  # Mất mát tổng hợp
         """Trả về mất mát tổng và từ điển các thành phần."""  # Mô tả hàm
         ld = self.data(pred, batch["y"])  # Thành phần dữ liệu
         lp = self.phys(pred, batch["aux"])  # Thành phần vật lý
-        total = self.lam_d * ld + self.phys_weight(epoch) * lp  # Tổng có trọng số
-        return total, {"data": float(ld.detach()), "phys": float(lp.detach())}  # Trả về tổng và chi tiết
+        lr = self.rs(pred, batch["y"])  # Thành phần phạt riêng Rs
+        total = self.lam_d * ld + self.phys_weight(epoch) * lp + self.lam_r * lr  # Tổng có trọng số
+        return total, {"data": float(ld.detach()), "phys": float(lp.detach()), "rs": float(lr.detach())}  # Trả về tổng và chi tiết
 
 
 def build_loss(cfg, mode="pinn"):  # Hàm dựng mất mát từ cấu hình
-    """Dựng mất mát; mode='baseline' bỏ thành phần vật lý (λ_phys = 0)."""  # Mô tả hàm
+    """Dựng mất mát; mode='baseline' bỏ thành phần vật lý (λ_phys = 0), vẫn giữ λ_rs để hai mô hình so sánh công bằng."""  # Mô tả hàm
     m, l = cfg["motor"], cfg["loss"]  # Rút gọn các nhóm cấu hình
     ref = [m["rs_20c"], m["ld_unsat"], m["lq_unsat"]]  # Giá trị tham chiếu chuẩn hóa
     lam_p = 0.0 if mode == "baseline" else l["lambda_phys"]  # Trọng số vật lý theo chế độ
-    return PINNLoss(ref, m["phi_m"], m["u_dc"] / 3 ** 0.5, l["lambda_data"], lam_p, l["warmup_epochs"])  # Dựng mất mát
+    lam_r = l.get("lambda_rs", 0.0)  # Trọng số phạt Rs, thiếu khóa thì tắt để tương thích cấu hình cũ
+    return PINNLoss(ref, m["phi_m"], m["u_dc"] / 3 ** 0.5, l["lambda_data"], lam_p, l["warmup_epochs"], lam_r)  # Dựng mất mát
