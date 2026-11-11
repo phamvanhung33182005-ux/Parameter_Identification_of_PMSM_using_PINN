@@ -57,6 +57,6 @@ class PINNLoss(nn.Module):  # Mất mát tổng hợp
 def build_loss(cfg, mode="pinn"):  # Hàm dựng mất mát từ cấu hình
     """Dựng mất mát; mode='baseline' bỏ thành phần vật lý (λ_phys = 0)."""  # Mô tả hàm
     m, l = cfg["motor"], cfg["loss"]  # Rút gọn các nhóm cấu hình
-    ref = [m["rs_20c"], m["ld_unsat"], m["lq_unsat"]]  # Giá trị tham chiếu chuẩn hóa
+    ref = [m["rs_20c"], m["ld_ref"], m["lq_ref"]]  # Giá trị tham chiếu chuẩn hóa
     lam_p = 0.0 if mode == "baseline" else l["lambda_phys"]  # Trọng số vật lý theo chế độ
     return PINNLoss(ref, m["psi_m"], m["u_dc"] / 3 ** 0.5, l["lambda_data"], lam_p, l["warmup_epochs"])  # Dựng mất mát
