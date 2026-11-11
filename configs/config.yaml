@@ -17,8 +17,8 @@ motor:  # Thông số động cơ và giới hạn vận hành
   theta_min_c: 20.0  # Nhiệt độ cuộn dây thấp nhất (°C), ứng với rs_20c
   theta_max_c: 128.0  # Nhiệt độ cuộn dây cao nhất (°C), ứng với rs_128c
   temp_k: 232.85  # Hằng số nhiệt độ suy ra từ Rs tại 20 °C và 128 °C; IEC 60034-2-1 dùng 235 [TBD] xác nhận
-  ld_unsat: 0.001467  # Điện cảm trục d chưa bão hòa (H)
-  lq_unsat: 0.001466  # Điện cảm trục q chưa bão hòa (H)
+  ld_ref: 0.00115  # [TBD] Giá trị tham chiếu để chuẩn hóa sai số Ld trong hàm mất mát (H), làm tròn từ trung vị Ld quan sát được; cập nhật theo tập huấn luyện
+  lq_ref: 0.00143  # [TBD] Giá trị tham chiếu để chuẩn hóa sai số Lq trong hàm mất mát (H), làm tròn từ trung vị Lq quan sát được; cập nhật theo tập huấn luyện
   i_rated_peak: 65.28  # Dòng đỉnh pha định mức In,pk (A)
   u_dc: 300.0  # Điện áp một chiều của bộ biến tần (V)
   n_max: 1100.0  # Tốc độ tối đa (vòng/phút)
@@ -35,7 +35,6 @@ data:  # Cấu hình bộ dữ liệu
   sg_polyorder: 3  # [TBD] Bậc đa thức Savitzky-Golay
   rs_step_threshold: 0.005  # Ngưỡng tương đối phát hiện bước nhảy Rs
   t_settle: 0.05  # [TBD] Thời gian xác lập sau bước nhảy Rs (s)
-  sat_ratio: 0.95  # [TBD] Tỷ số L/L chưa bão hòa dưới ngưỡng này là bão hòa
   bound_margin: 0.2  # Biên mở rộng khoảng giá trị đầu ra
   consistency_rms_pu: 0.02  # [TBD] Ngưỡng RMS sai số điện áp trục q theo điện áp cơ sở; hiệu chỉnh theo dữ liệu thật
   psi_check_tol_pct: 2.0  # [TBD] Sai lệch tương đối tối đa (%) giữa Psi_m ước lượng từ dữ liệu và Psi_m trong cấu hình
@@ -57,13 +56,12 @@ loss:  # Cấu hình hàm mất mát
   warmup_epochs: 50  # [TBD] Số kỷ nguyên tăng dần trọng số vật lý
 evaluation:  # Chỉ tiêu đánh giá theo PRD
   verdict_stat: max  # [TBD] Thống kê kết luận: max hoặc p95
-  i_range_low: 0.2  # Cận dưới dải dòng điện theo In
   recon_horizon_s: 0.01  # [TBD] Độ dài đoạn mô phỏng tái tạo dòng điện (s)
   rmse_limit_pct: 2.0  # Giới hạn RMSE dòng điện (%)
   tolerances:  # Sai số tương đối tối đa cho phép (%)
     Rs: {steady: 3.0, transient: 5.0}  # Điện trở stator
-    Ld: {unsat: 5.0, sat: 7.0}  # Điện cảm trục d
-    Lq: {unsat: 5.0, sat: 8.0}  # Điện cảm trục q
+    Ld: {all: 5.0}  # [TBD] Điện cảm trục d, một ngưỡng chung cho mọi mẫu (lấy ngưỡng chặt hơn của PRD)
+    Lq: {all: 5.0}  # [TBD] Điện cảm trục q, một ngưỡng chung cho mọi mẫu (lấy ngưỡng chặt hơn của PRD)
 deployment:  # Cấu hình triển khai trên DSP
   cpu_mhz: 200.0  # [TBD] Tần số xung nhịp DSP (MHz)
   task_period_us: 1000.0  # [TBD] Chu kỳ tác vụ nhận dạng (µs)
