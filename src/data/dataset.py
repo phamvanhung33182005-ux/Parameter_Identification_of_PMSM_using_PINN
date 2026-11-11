@@ -19,7 +19,7 @@ class PMSMDataset(Dataset):  # Lớp tập dữ liệu
         self.x = torch.tensor(df[INPUT_COLS].to_numpy(dtype=np.float32))  # Tensor đầu vào
         self.y = torch.tensor(df[LABEL_COLS].to_numpy(dtype=np.float32))  # Tensor nhãn
         self.aux = torch.tensor(df[AUX_COLS].to_numpy(dtype=np.float32))  # Tensor đại lượng phụ
-        self.flags = df[["is_transient", "is_saturated"]].to_numpy(dtype=bool)  # Cờ vận hành
+        self.flags = df[["is_transient"]].to_numpy(dtype=bool)  # Cờ vận hành (quá độ)
 
     def __len__(self):  # Số mẫu
         """Trả về số mẫu của tập dữ liệu."""  # Mô tả hàm
