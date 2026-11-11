@@ -41,12 +41,24 @@ def compute_derivatives(df, dt, window, polyorder):  # Hàm tính đạo hàm d�
     return out  # Trả về hai mảng đạo hàm
 
 
-def voltage_residual_numpy(df, phi_m, pole_pairs):  # Hàm sai số phương trình điện áp
+def voltage_residual_numpy(df, psi_m, pole_pairs):  # Hàm sai số phương trình điện áp
     """Tính sai số phương trình điện áp d-q với tham số nhãn trong bộ dữ liệu."""  # Mô tả hàm
     w = df["omega_e"].to_numpy()  # Tốc độ góc điện
     rd = df["ud"] - (df["Rs"] * df["Id"] + df["Ld"] * df["did_dt"] - w * df["Lq"] * df["Iq"])  # Sai số trục d
-    rq = df["uq"] - (df["Rs"] * df["Iq"] + df["Lq"] * df["diq_dt"] + w * df["Ld"] * df["Id"] + w * phi_m)  # Sai số trục q
+    rq = df["uq"] - (df["Rs"] * df["Iq"] + df["Lq"] * df["diq_dt"] + w * df["Ld"] * df["Id"] + w * psi_m)  # Sai số trục q
     return rd.to_numpy(), rq.to_numpy()  # Trả về hai mảng sai số
+
+
+def estimate_psi_m(df, min_speed_ratio=0.1):  # Hàm ước lượng Psi_m từ dữ liệu
+    """Ước lượng Psi_m bằng bình phương tối thiểu từ phương trình trục q, trên các mẫu đủ nhanh và không quá độ."""  # Mô tả hàm
+    w = df["omega_e"].to_numpy(dtype=float)  # Tốc độ góc điện
+    y = (df["uq"] - (df["Rs"] * df["Iq"] + df["Lq"] * df["diq_dt"] + w * df["Ld"] * df["Id"])).to_numpy(dtype=float)  # Phần điện áp còn lại bằng ωe·Psi_m
+    mask = np.abs(w) > min_speed_ratio * np.max(np.abs(w))  # Chỉ giữ mẫu có tốc độ đủ lớn
+    if "is_transient" in df.columns:  # Nếu có cờ quá độ
+        mask &= ~df["is_transient"].to_numpy(dtype=bool)  # Loại mẫu quá độ
+    if int(mask.sum()) < 10:  # Không đủ mẫu để ước lượng
+        raise ValueError("Không đủ mẫu tốc độ đủ lớn để ước lượng Psi_m")  # Báo lỗi rõ ràng
+    return float(np.sum(w[mask] * y[mask]) / np.sum(w[mask] ** 2))  # Nghiệm bình phương tối thiểu của y = ωe·Psi_m
 
 
 def flag_rs_transient(df, threshold, t_settle):  # Hàm gắn cờ quá độ Rs
