@@ -73,11 +73,6 @@ def flag_rs_transient(df, threshold, t_settle):  # Hàm gắn cờ quá độ Rs
     return flag, int(len(idx))  # Trả về cờ và số bước nhảy
 
 
-def flag_saturation(df, ld_unsat, lq_unsat, ratio):  # Hàm gắn cờ bão hòa từ
-    """Gắn cờ bão hòa khi Ld hoặc Lq nhỏ hơn ratio lần giá trị chưa bão hòa."""  # Mô tả hàm
-    return ((df["Ld"] < ratio * ld_unsat) | (df["Lq"] < ratio * lq_unsat)).to_numpy()  # Điều kiện bão hòa
-
-
 def build_processed(df, cfg):  # Hàm dựng bảng đã xử lý
     """Dựng bảng đã xử lý gồm tín hiệu, đạo hàm, ωe và các cờ vận hành."""  # Mô tả hàm
     d, m = cfg["data"], cfg["motor"]  # Rút gọn các nhóm cấu hình
@@ -88,7 +83,6 @@ def build_processed(df, cfg):  # Hàm dựng bảng đã xử lý
     out["did_dt"], out["diq_dt"] = der["did_dt"], der["diq_dt"]  # Thêm cột đạo hàm
     out["omega_e"] = compute_omega_e(out["nm"], m["pole_pairs"])  # Thêm cột ωe
     out["is_transient"], _ = flag_rs_transient(out, d["rs_step_threshold"], d["t_settle"])  # Thêm cờ quá độ
-    out["is_saturated"] = flag_saturation(out, m["ld_unsat"], m["lq_unsat"], d["sat_ratio"])  # Thêm cờ bão hòa
     half = d["sg_window"] // 2  # Số mẫu biên bị ảnh hưởng bởi bộ lọc
     out = out.iloc[half:len(out) - half].reset_index(drop=True)  # Cắt các mẫu biên
     return out.iloc[::d["stride"]].reset_index(drop=True)  # Lấy mẫu con theo bước stride
