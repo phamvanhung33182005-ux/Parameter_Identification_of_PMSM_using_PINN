@@ -36,8 +36,8 @@ def evaluate_parameters(pred, true, masks, tolerances, verdict_stat="max"):  # �
     return rows  # Trả về bảng kết quả
 
 
-def reconstruct_currents(pred, aux, dt, horizon_steps, phi_m):  # Tái tạo dòng điện
-    """Mô phỏng id, iq theo mô hình điện với tham số nhận dạng và Φm cố định trên các đoạn độc lập."""  # Mô tả hàm
+def reconstruct_currents(pred, aux, dt, horizon_steps, psi_m):  # Tái tạo dòng điện
+    """Mô phỏng id, iq theo mô hình điện với tham số nhận dạng và Psi_m cố định trên các đoạn độc lập."""  # Mô tả hàm
     rs, ld, lq = pred[:, 0], pred[:, 1], pred[:, 2]  # Tách tham số
     ud, uq, i_d, i_q, w = [aux[:, k] for k in range(5)]  # Tách đại lượng đo
     n_seg = len(rs) // horizon_steps  # Số đoạn đầy đủ
@@ -48,7 +48,7 @@ def reconstruct_currents(pred, aux, dt, horizon_steps, phi_m):  # Tái tạo dò
     for k in range(horizon_steps):  # Duyệt từng bước thời gian
         out_d[:, k], out_q[:, k] = sd, sq  # Ghi trạng thái hiện tại
         dd = (ud[:, k] - rs[:, k] * sd + w[:, k] * lq[:, k] * sq) / ld[:, k]  # Đạo hàm id theo mô hình
-        dq = (uq[:, k] - rs[:, k] * sq - w[:, k] * ld[:, k] * sd - w[:, k] * phi_m) / lq[:, k]  # Đạo hàm iq theo mô hình
+        dq = (uq[:, k] - rs[:, k] * sq - w[:, k] * ld[:, k] * sd - w[:, k] * psi_m) / lq[:, k]  # Đạo hàm iq theo mô hình
         sd, sq = sd + dt * dd, sq + dt * dq  # Tích phân Euler
     return out_d, out_q, i_d, i_q  # Trả về dòng tái tạo và dòng đo
 

@@ -15,12 +15,12 @@ from src.models.pinn_model import PINNModel  # Mạng PINN
 from src.utils.common import load_config, get_paths  # Tiện ích cấu hình
 
 
-def load_model(ckpt_path, kind, phi_m):  # Nạp mô hình từ điểm lưu
+def load_model(ckpt_path, kind, psi_m):  # Nạp mô hình từ điểm lưu
     """Dựng lại mô hình từ kiến trúc đã lưu và nạp trọng số."""  # Mô tả hàm
     ck = torch.load(ckpt_path, map_location="cpu")  # Đọc điểm lưu
     a = ck["arch"]  # Lấy thông tin kiến trúc
     if kind == "pinn":  # Trường hợp PINN
-        m = PINNModel(a["in_scale"], a["out_lo"], a["out_hi"], phi_m, a["hidden_sizes"], a["activation"])  # Dựng PINN
+        m = PINNModel(a["in_scale"], a["out_lo"], a["out_hi"], psi_m, a["hidden_sizes"], a["activation"])  # Dựng PINN
     else:  # Trường hợp mạng cơ sở
         m = BaselineMLP(a["in_scale"], a["out_lo"], a["out_hi"], a["hidden_sizes"], a["activation"])  # Dựng MLP
     m.load_state_dict(ck["state_dict"])  # Nạp trọng số
@@ -30,7 +30,7 @@ def load_model(ckpt_path, kind, phi_m):  # Nạp mô hình từ điểm lưu
 def run_test(cfg, kind, split="test"):  # Chạy kiểm thử
     """Đánh giá mô hình kind trên tập split, lưu JSON và đồ thị, trả về kết quả."""  # Mô tả hàm
     P, ev, mo = get_paths(cfg), cfg["evaluation"], cfg["motor"]  # Đường dẫn và nhóm cấu hình
-    model = load_model(os.path.join(P["models"], f"{kind}_best.pt"), kind, mo["phi_m"])  # Nạp mô hình
+    model = load_model(os.path.join(P["models"], f"{kind}_best.pt"), kind, mo["psi_m"])  # Nạp mô hình
     frames = load_processed(P["processed"], cfg["data"]["split"][split])  # Nạp các tệp của tập cần đánh giá
     preds, trues, flags, auxs, rec = [], [], [], [], {"d": [], "q": [], "md": [], "mq": []}  # Bộ tích lũy
     for df in frames:  # Duyệt từng tệp
@@ -40,7 +40,7 @@ def run_test(cfg, kind, split="test"):  # Chạy kiểm thử
         a = df[AUX_COLS].to_numpy(np.float64)  # Đại lượng phụ
         dt = float(np.median(np.diff(df["Time"].to_numpy())))  # Chu kỳ giữa hai mẫu
         n_h = max(2, int(round(ev["recon_horizon_s"] / dt)))  # Số bước mỗi đoạn mô phỏng
-        rd, rq, md, mq = mt.reconstruct_currents(p, a, dt, n_h, mo["phi_m"])  # Tái tạo dòng điện
+        rd, rq, md, mq = mt.reconstruct_currents(p, a, dt, n_h, mo["psi_m"])  # Tái tạo dòng điện
         for k, v in zip(("d", "q", "md", "mq"), (rd, rq, md, mq)):  # Duyệt bốn mảng
             rec[k].append(v.ravel())  # Làm phẳng và lưu
         preds.append(p), trues.append(df[LABEL_COLS].to_numpy(np.float64))  # Lưu dự đoán và nhãn
