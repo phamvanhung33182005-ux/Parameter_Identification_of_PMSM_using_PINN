@@ -6,13 +6,16 @@
 Nhận dạng điện trở stator Rs và các điện cảm Ld, Lq của động cơ PMSM từ ud, uq, id, iq, nm.
 Huấn luyện ngoại tuyến; vận hành trực tuyến chỉ thực hiện lan truyền thuận với trọng số đã đóng băng.
 
+Phương án lai (P4): PINN nhận dạng Ld và Lq; Rs tính đại số từ phương trình trục q rồi lọc trung bình trượt.
+Từ thông nam châm Psi_m = 0,23191792 Wb là hằng số hiệu chuẩn ngoại tuyến, phải giữ đủ 8 chữ số có nghĩa.
+
 ## Cấu trúc kho
 - `configs/config.yaml`: cấu hình trung tâm.
 - `src/data/`: tiền xử lý, lớp Dataset, DataLoader.
 - `src/models/`: baselineMLP.py, pinn_model.py.
 - `src/training/`: loss_functions.py, trainer.py.
 - `src/evaluation/`: metrics.py, test.py, hil_analysis.py.
-- `src/deployment/`: xuất mã C cho DSP.
+- `src/deployment/`: xuất mã C cho DSP (mạng PINN và bộ ước lượng Rs).
 - `src/utils/`: tiện ích dùng chung.
 - `notebooks/`: mười sổ tay Colab chạy độc lập.
 
