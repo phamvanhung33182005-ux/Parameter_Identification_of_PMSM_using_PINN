@@ -55,9 +55,14 @@ loss:  # Cấu hình hàm mất mát
   lambda_phys: 1.0  # [TBD] Trọng số thành phần vật lý
   warmup_epochs: 50  # [TBD] Số kỷ nguyên tăng dần trọng số vật lý
 rs_estimator:  # Bộ ước lượng Rs đại số có lọc (phương án P4: PINN nhận dạng Ld, Lq; Rs tính từ phương trình trục q)
-  window: 2000  # [TBD-12] Cửa sổ lọc trung bình trượt (số mẫu); gắn với stride và chu kỳ lấy mẫu của dữ liệu
-  iq_min_a: 5.0  # [TBD-12] Ngưỡng |Iq| tối thiểu (A); mẫu dưới ngưỡng không dùng để ước lượng Rs
+  window: 2000  # [TBD-12] Cửa sổ lọc trượt (số mẫu); gắn với stride và chu kỳ lấy mẫu của dữ liệu; chọn trên Data4 (sổ tay 08, Cell 6)
+  iq_min_a: 10.0  # [TBD-12] Ngưỡng |Iq| tối thiểu (A); mẫu dưới ngưỡng không dùng để ước lượng Rs; chọn trên Data4, không chọn trên Data5
   causal: true  # Lọc nhân quả (chỉ dùng mẫu quá khứ), phù hợp chạy thời gian thực trên DSP
+  band_gate: true  # Lớp 1: loại mẫu Rs thô nằm ngoài dải vật lý trước khi lọc
+  band_low_factor: 0.9  # Biên dưới của dải vật lý bằng hệ số này nhân Rs tại 20 °C
+  band_high_factor: 1.1  # Biên trên của dải vật lý bằng hệ số này nhân Rs tại 128 °C
+  min_valid_ratio: 0.25  # Lớp 2: chỉ cập nhật Rs khi cửa sổ có ít nhất tỷ lệ này mẫu hợp lệ (500/2.000); nếu không giữ giá trị trước, đầu tệp dùng rs_20c
+  clip_output: true  # Lớp 3: cắt Rs đầu ra về dải vật lý (lưới an toàn cho DSP)
 evaluation:  # Chỉ tiêu đánh giá theo PRD
   verdict_stat: max  # [TBD] Thống kê kết luận: max hoặc p95
   recon_horizon_s: 0.01  # [TBD] Độ dài đoạn mô phỏng tái tạo dòng điện (s)

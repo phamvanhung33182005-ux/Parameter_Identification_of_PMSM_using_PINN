@@ -6,7 +6,8 @@
 Nhận dạng điện trở stator Rs và các điện cảm Ld, Lq của động cơ PMSM từ ud, uq, id, iq, nm.
 Huấn luyện ngoại tuyến; vận hành trực tuyến chỉ thực hiện lan truyền thuận với trọng số đã đóng băng.
 
-Phương án lai (P4): PINN nhận dạng Ld và Lq; Rs tính đại số từ phương trình trục q rồi lọc trung bình trượt.
+Phương án lai (P4): PINN nhận dạng Ld và Lq; Rs tính đại số từ phương trình trục q rồi lọc tỷ số các tổng Σ(num·iq)/Σ(iq²) trên cửa sổ trượt,
+với ba lớp giới hạn: loại mẫu thô ngoài dải vật lý [0,9·Rs(20 °C); 1,1·Rs(128 °C)], số mẫu hợp lệ tối thiểu mỗi cửa sổ, cắt đầu ra về dải vật lý.
 Từ thông nam châm Psi_m = 0,23191792 Wb là hằng số hiệu chuẩn ngoại tuyến, phải giữ đủ 8 chữ số có nghĩa.
 
 ## Cấu trúc kho
