@@ -1,33 +1,31 @@
-"""Lớp Dataset và hàm dựng DataLoader cho bài toán nhận dạng tham số PMSM."""  # Mô tả mô-đun
+"""Lớp Dataset và hàm dựng DataLoader cho MLP nhận dạng Ld, Lq theo (id, iq)."""  # Mô tả mô-đun
 import os  # Thao tác đường dẫn
 import numpy as np  # Thư viện số học mảng
 import pandas as pd  # Thư viện bảng dữ liệu
 import torch  # Thư viện học sâu
 from torch.utils.data import Dataset, DataLoader  # Lớp cơ sở và bộ nạp dữ liệu
 
-INPUT_COLS = ["ud", "uq", "Id", "Iq", "nm"]  # Đầu vào của mạng (đơn vị vật lý)
-LABEL_COLS = ["Rs", "Ld", "Lq"]  # Nhãn tham số (đơn vị SI)
-AUX_COLS = ["ud", "uq", "Id", "Iq", "omega_e", "did_dt", "diq_dt"]  # Đại lượng phụ cho sai số vật lý
+INPUT_COLS = ["Id", "Iq"]  # Đầu vào của mạng (A)
+LABEL_COLS = ["Ld", "Lq"]  # Nhãn của mạng (H)
 
 
 class PMSMDataset(Dataset):  # Lớp tập dữ liệu
-    """Tập dữ liệu PMSM: đầu vào vật lý, nhãn SI và đại lượng phụ cho thành phần vật lý."""  # Mô tả lớp
+    """Tập dữ liệu PMSM: đầu vào (id, iq) và nhãn (Ld, Lq) theo đơn vị SI."""  # Mô tả lớp
 
     def __init__(self, frames):  # Hàm khởi tạo
         """Nhận danh sách bảng đã xử lý và dựng các tensor."""  # Mô tả hàm
         df = pd.concat(frames, ignore_index=True)  # Gộp các bảng
         self.x = torch.tensor(df[INPUT_COLS].to_numpy(dtype=np.float32))  # Tensor đầu vào
         self.y = torch.tensor(df[LABEL_COLS].to_numpy(dtype=np.float32))  # Tensor nhãn
-        self.aux = torch.tensor(df[AUX_COLS].to_numpy(dtype=np.float32))  # Tensor đại lượng phụ
-        self.flags = df[["is_transient"]].to_numpy(dtype=bool)  # Cờ vận hành (quá độ)
+        self.flags = df[["is_transient"]].to_numpy(dtype=bool)  # Cờ vận hành (quá độ), chỉ để thống kê
 
     def __len__(self):  # Số mẫu
         """Trả về số mẫu của tập dữ liệu."""  # Mô tả hàm
         return self.x.shape[0]  # Số hàng của tensor đầu vào
 
     def __getitem__(self, i):  # Lấy một mẫu
-        """Trả về từ điển gồm x, y, aux của mẫu thứ i."""  # Mô tả hàm
-        return {"x": self.x[i], "y": self.y[i], "aux": self.aux[i]}  # Gói mẫu
+        """Trả về từ điển gồm x, y của mẫu thứ i."""  # Mô tả hàm
+        return {"x": self.x[i], "y": self.y[i]}  # Gói mẫu
 
 
 def load_processed(processed_dir, names):  # Hàm nạp các tệp đã xử lý
