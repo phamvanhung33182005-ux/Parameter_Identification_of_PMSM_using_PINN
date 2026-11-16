@@ -46,7 +46,9 @@ train:  # Cấu hình huấn luyện
   batch_size: 1024  # [TBD] Kích thước lô
   epochs: 300  # [TBD] Số kỷ nguyên tối đa
   lr: 0.001  # [TBD] Tốc độ học ban đầu
-  weight_decay: 0.0001  # Hệ số suy giảm trọng số
+  weight_decay: 0.0001  # Hệ số suy giảm trọng số (AdamW: tách khỏi gradient)
+  optimizer: adamw  # adam hoặc adamw; adamw tránh suy giảm trọng số át gradient khi mất mát nhỏ
+  loss_norm: std  # std: chuẩn hóa sai số Ld, Lq theo độ lệch chuẩn nhãn huấn luyện (mất mát cỡ O(1)); ref: theo ld_ref, lq_ref (cũ)
   patience: 30  # Số kỷ nguyên chờ trước khi dừng sớm
   grad_clip: 1.0  # Ngưỡng cắt gradient
 rs_estimator:  # Bộ ước lượng Rs đại số có lọc: Rs tính từ phương trình trục q với Ld, Lq do MLP nhận dạng
@@ -54,13 +56,24 @@ rs_estimator:  # Bộ ước lượng Rs đại số có lọc: Rs tính từ ph
   filter: rect  # Kiểu cửa sổ: rect (chữ nhật, window mẫu) hoặc ema (trọng số mũ λ = 1 − 1/window, chỉ nhân quả)
   l_smooth: 0  # Số mẫu làm trơn mũ nhân quả của Ld, Lq trước khi tính Rs; 0 hoặc 1 là không làm trơn
   window: 2000  # [TBD-12] Cửa sổ lọc (số mẫu; với filter ema là hằng số thời gian); gắn với stride và chu kỳ lấy mẫu của dữ liệu; chọn trên Data4 (sổ tay 06, Cell 7)
-  iq_min_a: 10.0  # [TBD-12] Ngưỡng |Iq| tối thiểu (A); mẫu dưới ngưỡng không dùng để ước lượng Rs; chọn trên Data4, không chọn trên Data5
+  iq_min_a: 3.0  # [TBD-12] Sàn |Iq| tối thiểu (A); khi obs_gate = true, ngưỡng thực tế là max(iq_min_a, (obs_s0_v + |ωe|·obs_spsi_wb)/(obs_kappa·Rs_danh_định)); chọn trên Data4, không chọn trên Data5
   causal: true  # Lọc nhân quả (chỉ dùng mẫu quá khứ), phù hợp chạy thời gian thực trên DSP
   band_gate: true  # Lớp 1: loại mẫu Rs thô nằm ngoài dải vật lý trước khi lọc
   band_low_factor: 0.9  # Biên dưới của dải vật lý bằng hệ số này nhân Rs tại 20 °C
   band_high_factor: 1.1  # Biên trên của dải vật lý bằng hệ số này nhân Rs tại 128 °C
   min_valid_ratio: 0.25  # Lớp 2: chỉ cập nhật Rs khi cửa sổ có ít nhất tỷ lệ này mẫu hợp lệ (500/2.000); nếu không giữ giá trị trước, đầu tệp dùng rs_20c
   clip_output: true  # Lớp 3: cắt Rs đầu ra về dải vật lý (lưới an toàn cho DSP)
+  bias_comp: true  # Bù độ lệch điện áp hệ thống b0 + b1·ωe (hiệu chỉnh ngoại tuyến trên Data1-3 bằng nhãn, ghi ở bias.json); Ψm không đổi
+  obs_gate: true  # Ngưỡng |iq| theo tốc độ: chỉ cập nhật Rs khi sai số điện áp còn lại nhỏ so với Rs·iq
+  obs_s0_v: 0.03  # [TBD] Độ bất định điện áp không phụ thuộc tốc độ sau bù (V), ước từ phần dư Data4
+  obs_spsi_wb: 5.0e-5  # [TBD] Độ bất định từ thông hiệu dụng sau bù (Wb), ước từ phần dư Data4
+  obs_kappa: 0.3  # [TBD] Sai số tương đối Rs chấp nhận được do độ bất định điện áp
+  dyn_gate: true  # Cổng quá độ: loại mẫu khi tốc độ hoặc dòng đổi nhanh làm trễ tín hiệu gây sai số điện áp lớn so với Rs·iq
+  dyn_tau_w_s: 7.5e-4  # [TBD] Độ trễ hiệu dụng của tín hiệu tốc độ (s), ước từ Data4 (đoạn gia tốc 215-242k mẫu: 0,75 ms)
+  dyn_tau_i_s: 3.0e-4  # [TBD] Độ trễ hiệu dụng của dòng điện/nhãn (s), ước từ Data4 (nhãn trễ 40-80 mẫu = 0,2-0,4 ms)
+  dyn_k: 0.15  # [TBD] Loại mẫu nếu sai số điện áp dự kiến vượt dyn_k·Rs·|iq|
+  dyn_n_avg: 200  # Số mẫu hiệu lùi để tính đạo hàm nhân quả (1 ms ở Ts = 5 µs)
+  dyn_hold_n: 200  # Số mẫu giữ thêm sau quá độ
 evaluation:  # Chỉ tiêu đánh giá theo PRD
   verdict_stat: max  # [TBD] Thống kê kết luận: max hoặc p95
   recon_horizon_s: 0.01  # [TBD] Độ dài đoạn mô phỏng tái tạo dòng điện (s)
